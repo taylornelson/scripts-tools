@@ -1,4 +1,3 @@
-#AKA ineedajob.py 2-4pm 7/19/16
 
 import argparse
 import urllib2
@@ -47,7 +46,7 @@ def quick_view_entries(urls):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-c', dest='category', action='store', default='jjj')
-	parser.add_argument('-q', dest='query', action='store', default='massage')
+	parser.add_argument('-q', dest='query', action='store', default='jobname')
 	#parser.add_argument('region', type=str, default='slo')
 	args = parser.parse_args()
 	list_res = browse_list(args.category, args.query)

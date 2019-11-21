@@ -1,0 +1,22 @@
+#CREATE DATABASE 'guacamole';
+#CREATE USER 'guacamole'@'localhost' IDENTIFIED BY 'guacamole';
+#GRANT ALL PRIVILEGES ON *.* TO 'guacamole'@'localhost' IDENTIFIED BY 'guacamole';
+
+#!/usr/bin/env bash
+#apt install docker
+sudo service mysql stop
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+docker run --name guacd -d guacamole/guacd
+#docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > initdb.sql
+#mysql -u guacamole -p guacamole < initdb.sql
+docker run --name mysql -e MYSQL_DATABASE=guacamole -e MYSQL_USER=guacamole -e MYSQL_PASSWORD=guacamole -e MYSQL_ROOT_PASSWORD=guacamole -d -p 3306:3306 mysql:8
+wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.tar.gz
+#tar -xvf mysql-connector-java-8.0.18.tar.gz
+#docker cp mysql-connector-java-8.0.18/mysql-connector-java-8.0.18.jar guacamole:/mysql-connector-java-8.0.18.jar
+docker run --name guacamole --link guacd:guacd --link mysql:mysql -e MYSQL_DATABASE=guacamole -e MYSQL_USER=guacamole -e MYSQL_PASSWORD=guacamole -e MYSQL_ROOT_PASSWORD=guacamole -d -p 8080:8080 guacamole/guacamole
+docker cp initdb.sql mysql:/initdb.sql
+docker exec -t mysql /bin/bash -c 'echo "guacamole" > mysql -u guacamole -p guacamole < initdb.sql'
+docker cp mysql-connector-java-8.0.18/mysql-connector-java-8.0.18.jar guacamole:/opt/guacamole/mysql/
+docker exec -t guacamole /bin/bash -c 'rm /opt/guacamole/mysql/*5.1*'
+#echo 'guacamole' > mysql -u guacamole -p guacamole < initdb.sql

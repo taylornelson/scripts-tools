@@ -1,0 +1,21 @@
+https://stackoverflow.com/questions/21920993/convert-amazon-ec2-ami-to-virtual-or-vagrant-box
+
+This clones an ec2 instance to local to run it in a vm
+Need a script to convert local/remote linux commands and back and forth
+sudo perl -i -pe 's/#PermitRootLogin .*/PermitRootLogin without-password/' /etc/ssh/sshd_config
+sudo perl -i -pe 's/.*(ssh-rsa .*)/\1/' /root/.ssh/authorized_keys
+sudo /etc/init.d/sshd reload # optional command<br>
+dd if=/dev/xvda1 bs=1M | gzip | gunzip | dd of=./ec2-image.raw
+dd if=/dev/zero of=vmdk-image.raw bs=1M count=10240 # create a 10gb image file
+losetup -fv vmdk-image.raw # mount as loopback device
+cfdisk /dev/loop0 # create a bootable partition, write, and quit
+losetup -fv -o 32256 vmdk-image.raw # mount the partition with an offset
+fdisk -l -u /dev/loop0 # get the size of the partition
+mkfs.ext4 -b 4096 /dev/loop1 $(((20971519 - 63)*512/4096)) # format using the END number
+losetup -fv ec2-image.raw
+mkdir -p /mnt/loop/1 /mnt/loop/2 # create mount points
+mount -t ext4 /dev/loop1 /mnt/loop/1 # mount vmdk-image
+mount -t ext4 /dev/loop2 /mnt/loop/2 # mount ami-image
+cp -a /mnt/loop/2/* /mnt/loop/1/
+cp /usr/lib/grub/x86_64-pc/stage* /mnt/loop/1/boot/grub/
+qemu-img convert -f raw -O vmdk vmdk-image.raw final.vmdk
